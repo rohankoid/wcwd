@@ -1,0 +1,7 @@
+# Ignored Directories
+.idea/
+vendor/
+
+# Ignored Files
+composer.lock
+composer.phar
