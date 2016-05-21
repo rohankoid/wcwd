@@ -5,3 +5,4 @@ vendor/
 # Ignored Files
 composer.lock
 composer.phar
+handler.php

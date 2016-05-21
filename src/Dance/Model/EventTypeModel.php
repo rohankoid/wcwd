@@ -3,12 +3,12 @@
 namespace Dance\Model;
 
 use Doctrine\DBAL\Connection;
-use Dance\Entity\Event;
+use Dance\Entity\EventType;
 
 /**
  * Event repository
  */
-class EventModel implements ModelInterface
+class EventTypeModel implements ModelInterface
 {
     /**
      * @var \Doctrine\DBAL\Connection
@@ -25,47 +25,37 @@ class EventModel implements ModelInterface
     /**
      * Saves the event to the database.
      *
-     * @param \Dance\Entity\Event $event
+     * @param \Dance\Entity\EventType $event
      */
     public function save($event)
     {
         $eventData = array(
-            'id' => $event->getIdevent(),
-            'venue' => $event->getVenue(),
-            'idevent_type' => $event->getIdeventType(),
-            'iduser' => $event->getIdUser(),
-            'contact_number' => $event->getContactNumber(),
-            'dance_stype' => $event->getDanceStyle(),
-            'teacher' => $event->getTeacher(),
-            'going' => $event->getGoing(),
-            'start_date' => $event->getStartDate(),
-            'end_date' => $event->getEndDate(),
-            'description' => $event->getDescription(),
+            'type' => $event->getType(),
         );
 
-        if ($event->getIdEvent()) {
-            $this->db->update(self::prefix.'event_type', $eventData, array('idevent' => $event->getIdEvent()));
+        if ($event->getIdeventType()) {
+            $this->db->update(self::prefix.'event_type', $eventData, array('idevent_type' => $event->getIdeventType()));
         }
         else {
-            // The event is new, note the creation timestamp.
+            // The event type is new, note the creation timestamp.
             $now = new DateTime();
             $now->format('Y-m-d H:i:s');
 
-            $this->db->insert(self::prefix.'event', $eventData);
-            // Get the id of the newly created event and set it on the entity.
+            $this->db->insert(self::prefix.'event_type', $eventData);
+            // Get the id of the newly created event type and set it on the entity.
             $id = $this->db->lastInsertId();
-            $event->setIdEvent($id);
+            $event->setIdeventType($id);
         }
     }
 
     /**
      * Deletes the event.
      *
-     * @param \Dance\Entity\Event $event
+     * @param \Dance\Entity\EventType $event
      */
     public function delete($event)
     {
-        return $this->db->delete(self::prefix.'event', array('idevent' => $event->getIdEvent()));
+        return $this->db->delete('events', array('idevent_type' => $event->getIdeventType()));
     }
 
     /**
@@ -74,7 +64,7 @@ class EventModel implements ModelInterface
      * @return integer The total number of events.
      */
     public function getCount() {
-        return $this->db->fetchColumn('SELECT COUNT(idevent) FROM wcwd_event');
+        return $this->db->fetchColumn('SELECT COUNT(idevent_type) FROM wcwd_event_type');
     }
 
     /**
@@ -82,11 +72,11 @@ class EventModel implements ModelInterface
      *
      * @param integer $id
      *
-     * @return \Dance\Entity\Event|false An entity object if found, false otherwise.
+     * @return \Dance\Entity\EventType|false An entity object if found, false otherwise.
      */
     public function find($id)
     {
-        $eventData = $this->db->fetchAssoc('SELECT * FROM wcwd_event WHERE idevent = ?', array($id));
+        $eventData = $this->db->fetchAssoc('SELECT * FROM wcwd_event_type WHERE idevent_type = ?', array($id));
         return $eventData ? $this->buildEvent($eventData) : FALSE;
     }
 
@@ -112,7 +102,7 @@ class EventModel implements ModelInterface
         $queryBuilder = $this->db->createQueryBuilder();
         $queryBuilder
             ->select('a.*')
-            ->from(self::prefix.'event', 'a')
+            ->from(self::prefix.'event_type', 'a')
             ->setMaxResults($limit)
             ->setFirstResult($offset)
             ->orderBy('a.' . key($orderBy), current($orderBy));
@@ -121,34 +111,25 @@ class EventModel implements ModelInterface
 
         $events = array();
         foreach ($eventsData as $eventData) {
-            $eventId = $eventData['idevent'];
+            $eventId = $eventData['idevent_type'];
             $events[$eventId] = $this->buildEvent($eventData);
         }
         return $events;
     }
 
     /**
-     * Instantiates an event entity and sets its properties using db data.
+     * Instantiates an event type entity and sets its properties using db data.
      *
      * @param array $eventData
      *   The array of db data.
      *
-     * @return \Dance\Entity\Event
+     * @return \Dance\Entity\EventType
      */
     protected function buildEvent($eventData)
     {
-        $event = new Event();
-        $event->setIdEvent($eventData['idevent']);
+        $event = new EventType();
         $event->setIdeventType($eventData['idevent_type']);
-        $event->setIduser($eventData['iduser']);
-        $event->setVenue($eventData['venue']);
-        $event->setContactNumber($eventData['contact_number']);
-        $event->setDanceStyle($eventData['dance_style']);
-        $event->setTeacher($eventData['teacher']);
-        $event->setGoing($eventData['going']);
-        $event->setStartDate($eventData['start_date']);
-        $event->setEndDate($eventData['end_date']);
-        $event->setDescription($eventData['description']);
+        $event->setType($eventData['type']);
         $event->setCreatedAt($eventData['created_at']);
         return $event;
     }

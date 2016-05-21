@@ -40,8 +40,11 @@ $app->register(new Silex\Provider\SecurityServiceProvider(), array(
 $app['model.event'] = $app->share(function ($app) {
     return new Dance\Model\EventModel($app['db']);
 });
-$app['repository.user'] = $app->share(function ($app) {
+$app['model.user'] = $app->share(function ($app) {
     return new Dance\Model\UserModel($app['db'], $app['security.encoder.digest']);
+});
+$app['model.event_type'] = $app->share(function ($app) {
+    return new Dance\Model\EventTypeModel($app['db']);
 });
 
 
