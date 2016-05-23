@@ -9,5 +9,9 @@
     "psr-0": {
       "Dance\\": "src/"
     }
+  },
+  "require-dev": {
+    "symfony/browser-kit": "^3.0",
+    "symfony/css-selector": "^3.0"
   }
 }
