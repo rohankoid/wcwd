@@ -6,3 +6,4 @@ vendor/
 composer.lock
 composer.phar
 handler.php
+db/wcwd.mwb.bak

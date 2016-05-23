@@ -12,7 +12,7 @@ class User implements UserInterface
      *
      * @var integer
      */
-    protected $id;
+    protected $iduser;
 
     /**
      * Username.
@@ -74,16 +74,27 @@ class User implements UserInterface
      */
     protected $file;
 
-    public function getId()
+    /**
+     * @var String random token created at login
+     */
+    protected $token;
+
+    /**
+     * @return int
+     */
+    public function getIduser()
     {
-        return $this->id;
+        return $this->iduser;
     }
 
-    public function setId($id)
+    /**
+     * @param int $iduser
+     */
+    public function setIduser($iduser)
     {
-        $this->id = $id;
+        $this->iduser = $iduser;
     }
-
+    
     /**
      * @inheritDoc
      */
@@ -151,7 +162,7 @@ class User implements UserInterface
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTime $createdAt)
+    public function setCreatedAt($createdAt)
     {
         $this->createdAt = $createdAt;
     }
@@ -180,6 +191,22 @@ class User implements UserInterface
 
     public function setRole($role) {
         $this->role = $role;
+    }
+
+    /**
+     * @return String
+     */
+    public function getToken()
+    {
+        return $this->token;
+    }
+
+    /**
+     * @param String $token
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
     }
 
     /**

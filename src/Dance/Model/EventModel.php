@@ -49,8 +49,8 @@ class EventModel implements ModelInterface
         else {
             // The event is new, note the creation timestamp.
             $now = new DateTime();
-            $now->format('Y-m-d H:i:s');
-
+            $created_at = $now->format('Y-m-d H:i:s');
+            $eventData['created_at'] = $created_at;
             $this->db->insert(self::prefix.'event', $eventData);
             // Get the id of the newly created event and set it on the entity.
             $id = $this->db->lastInsertId();

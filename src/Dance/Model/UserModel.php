@@ -41,60 +41,27 @@ class UserModel implements ModelInterface, UserProviderInterface
             'username' => $user->getUsername(),
             'mail' => $user->getMail(),
             'role' => $user->getRole(),
+            'token' => $user->getToken(),
         );
         // If the password was changed, re-encrypt it.
         if (strlen($user->getPassword()) != 88) {
             $userData['salt'] = uniqid(mt_rand());
-            $userData['password'] = $this->encoder->encodePassword($user->getPassword(), $userData['salt']);
+            $userData['password'] = $this->getEncodedPassword($user->getPassword(), $userData['salt']);
         }
 
-        if ($user->getId()) {
-            // If a new image was uploaded, make sure the filename gets set.
-            $newFile = $this->handleFileUpload($user);
-            if ($newFile) {
-                $userData['image'] = $user->getImage();
-            }
-
-            $this->db->update('users', $userData, array('user_id' => $user->getId()));
+        if ($user->getIdUser()) {
+            $this->db->update('wcwd_user', $userData, array('iduser' => $user->getIduser()));
         } else {
             // The user is new, note the creation timestamp.
-            $userData['created_at'] = time();
-
-            $this->db->insert('users', $userData);
+            $now = new DateTime();
+            $created_at = $now->format('Y-m-d H:i:s');
+            $userData['created_at'] = $created_at;
+            $this->db->insert('wcwd_user', $userData);
             // Get the id of the newly created user and set it on the entity.
             $id = $this->db->lastInsertId();
-            $user->setId($id);
+            $user->setIdUser($id);
 
-            // If a new image was uploaded, update the user with the new
-            // filename.
-            $newFile = $this->handleFileUpload($user);
-            if ($newFile) {
-                $newData = array('image' => $user->getImage());
-                $this->db->update('users', $newData, array('user_id' => $id));
-            }
         }
-    }
-
-    /**
-     * Handles the upload of a user image.
-     *
-     * @param \Dance\Entity\User $user
-     *
-     * @param boolean TRUE if a new user image was uploaded, FALSE otherwise.
-     */
-    protected function handleFileUpload($user) {
-        // If a temporary file is present, move it to the correct directory
-        // and set the filename on the user.
-        $file = $user->getFile();
-        if ($file) {
-            $newFilename = $user->getUsername() . '.' . $file->guessExtension();
-            $file->move(WCWD_PUBLIC_ROOT . '/img/users', $newFilename);
-            $user->setFile(null);
-            $user->setImage($newFilename);
-            return TRUE;
-        }
-
-        return FALSE;
     }
 
     /**
@@ -104,7 +71,7 @@ class UserModel implements ModelInterface, UserProviderInterface
      */
     public function delete($id)
     {
-        return $this->db->delete('users', array('user_id' => $id));
+        return $this->db->delete('wcwd_user', array('iduser' => $id));
     }
 
     /**
@@ -113,7 +80,7 @@ class UserModel implements ModelInterface, UserProviderInterface
      * @return integer The total number of users.
      */
     public function getCount() {
-        return $this->db->fetchColumn('SELECT COUNT(user_id) FROM users');
+        return $this->db->fetchColumn('SELECT COUNT(iduser) FROM wcwd_user');
     }
 
     /**
@@ -125,7 +92,7 @@ class UserModel implements ModelInterface, UserProviderInterface
      */
     public function find($id)
     {
-        $userData = $this->db->fetchAssoc('SELECT * FROM users WHERE user_id = ?', array($id));
+        $userData = $this->db->fetchAssoc('SELECT * FROM wcwd_user WHERE iduser = ?', array($id));
         return $userData ? $this->buildUser($userData) : FALSE;
     }
 
@@ -151,7 +118,7 @@ class UserModel implements ModelInterface, UserProviderInterface
         $queryBuilder = $this->db->createQueryBuilder();
         $queryBuilder
             ->select('u.*')
-            ->from('users', 'u')
+            ->from('wcwd_user', 'u')
             ->setMaxResults($limit)
             ->setFirstResult($offset)
             ->orderBy('u.' . key($orderBy), current($orderBy));
@@ -160,7 +127,7 @@ class UserModel implements ModelInterface, UserProviderInterface
 
         $users = array();
         foreach ($usersData as $userData) {
-            $userId = $userData['user_id'];
+            $userId = $userData['iduser'];
             $users[$userId] = $this->buildUser($userData);
         }
 
@@ -175,7 +142,7 @@ class UserModel implements ModelInterface, UserProviderInterface
         $queryBuilder = $this->db->createQueryBuilder();
         $queryBuilder
             ->select('u.*')
-            ->from('users', 'u')
+            ->from('wcwd_user', 'u')
             ->where('u.username = :username OR u.mail = :mail')
             ->setParameter('username', $username)
             ->setParameter('mail', $username)
@@ -200,7 +167,7 @@ class UserModel implements ModelInterface, UserProviderInterface
             throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', $class));
         }
 
-        $id = $user->getId();
+        $id = $user->getIdUser();
         $refreshedUser = $this->find($id);
         if (false === $refreshedUser) {
             throw new UsernameNotFoundException(sprintf('User with id %s not found', json_encode($id)));
@@ -228,14 +195,26 @@ class UserModel implements ModelInterface, UserProviderInterface
     protected function buildUser($userData)
     {
         $user = new User();
-        $user->setId($userData['user_id']);
+        $user->setIdUser($userData['iduser']);
         $user->setUsername($userData['username']);
         $user->setSalt($userData['salt']);
         $user->setPassword($userData['password']);
         $user->setMail($userData['mail']);
         $user->setRole($userData['role']);
-        $createdAt = new \DateTime('@' . $userData['created_at']);
+        $user->setToken($userData['token']);
+        $createdAt = $userData['created_at'];
         $user->setCreatedAt($createdAt);
         return $user;
+    }
+
+    /**
+     * @param $salt String
+     * @param $password plain text password
+     *
+     * @return String encoded password
+     */
+    public function getEncodedPassword($password, $salt)
+    {
+        return $this->encoder->encodePassword($password, $salt);
     }
 }
