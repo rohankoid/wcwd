@@ -41,3 +41,6 @@ with each request.
 - DELETE api/artist/{event} - Deletes a single event.
 
 The output format is JSON.
+
+
+Thanks to [bojanz](https://github.com/bojanz/musicbox) and [gonzalo123](https://github.com/gonzalo123/token) for references.
