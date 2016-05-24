@@ -4,6 +4,7 @@ namespace Dance\Model;
 
 use Doctrine\DBAL\Connection;
 use Dance\Entity\EventType;
+use \DateTime;
 
 /**
  * Event repository

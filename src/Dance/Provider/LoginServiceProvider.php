@@ -57,7 +57,7 @@ class LoginServiceProvider implements ServiceProviderInterface
     {
         $userModel = $app['model.user'];
         $userObject = $userModel->loadUserByUsername($user);
-        $token = bin2hex(openssl_random_pseudo_bytes(16));
+        $token = $userModel->getNewToken();
         $userObject->setToken($token);
         $userModel->save($userObject);
         return $token;

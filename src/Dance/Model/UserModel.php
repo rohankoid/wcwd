@@ -4,10 +4,12 @@ namespace Dance\Model;
 
 use Doctrine\DBAL\Connection;
 use Dance\Entity\User;
+use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
+use \DateTime;
 
 /**
  * User Model
@@ -40,7 +42,7 @@ class UserModel implements ModelInterface, UserProviderInterface
         $userData = array(
             'username' => $user->getUsername(),
             'mail' => $user->getMail(),
-            'role' => $user->getRole(),
+            'role' => $user->getRole() ? $user->getRole() : "ROLE_USER",
             'token' => $user->getToken(),
         );
         // If the password was changed, re-encrypt it.
@@ -52,15 +54,22 @@ class UserModel implements ModelInterface, UserProviderInterface
         if ($user->getIdUser()) {
             $this->db->update('wcwd_user', $userData, array('iduser' => $user->getIduser()));
         } else {
-            // The user is new, note the creation timestamp.
-            $now = new DateTime();
-            $created_at = $now->format('Y-m-d H:i:s');
-            $userData['created_at'] = $created_at;
-            $this->db->insert('wcwd_user', $userData);
-            // Get the id of the newly created user and set it on the entity.
-            $id = $this->db->lastInsertId();
-            $user->setIdUser($id);
 
+            //check if username already exists
+            try{
+                $this->loadUserByUsername($user->getUsername());
+                // username already exists
+                throw new Exception(sprintf('Username "%s" already exists.', $user->getUsername()));
+            } catch (UsernameNotFoundException $exception) {
+                // The user is new, note the creation timestamp.
+                $now = new DateTime();
+                $created_at = $now->format('Y-m-d H:i:s');
+                $userData['created_at'] = $created_at;
+                $this->db->insert('wcwd_user', $userData);
+                // Get the id of the newly created user and set it on the entity.
+                $id = $this->db->lastInsertId();
+                $user->setIdUser($id);
+            }
         }
     }
 
@@ -216,5 +225,14 @@ class UserModel implements ModelInterface, UserProviderInterface
     public function getEncodedPassword($password, $salt)
     {
         return $this->encoder->encodePassword($password, $salt);
+    }
+
+    /**
+     * @return string Generate and return a new token for the user
+     */
+    public function getNewToken()
+    {
+        return bin2hex(openssl_random_pseudo_bytes(16));
+
     }
 }

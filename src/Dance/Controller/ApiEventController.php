@@ -125,7 +125,7 @@ class ApiEventController
         $event->setDescription($request->request->get('description'));
         $app['model.event']->save($event);
 
-        $headers = array('Location' => '/api/event/' . $event->getId());
+        $headers = array('Location' => '/api/event/' . $event->getIdEvent());
         return $app->json('Created', 201, $headers);
     }
 
